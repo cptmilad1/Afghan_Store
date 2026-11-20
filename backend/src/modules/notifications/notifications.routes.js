@@ -1,0 +1,4 @@
+const router=require('express').Router();const auth=require('../../middleware/auth.middleware');const {query}=require('../../config/db.config');const {id,send,asyncHandler,ApiError}=require('../../utilities/domain');router.use(auth);
+router.get('/',asyncHandler(async(req,res)=>{const {rows}=await query('SELECT * FROM notifications WHERE user_id=$1 ORDER BY created_at DESC LIMIT 100',[req.user.id]);send(res,rows);}));
+router.patch('/:id/read',asyncHandler(async(req,res)=>{const {rows}=await query('UPDATE notifications SET is_read=TRUE,read_at=NOW() WHERE id=$1 AND user_id=$2 RETURNING *',[id(req.params.id),req.user.id]);if(!rows[0])throw new ApiError(404,'Notification not found.');send(res,rows[0]);}));
+router.patch('/read-all',asyncHandler(async(req,res)=>{const {rowCount}=await query('UPDATE notifications SET is_read=TRUE,read_at=NOW() WHERE user_id=$1 AND is_read=FALSE',[req.user.id]);send(res,{updated:rowCount});}));module.exports=router;
